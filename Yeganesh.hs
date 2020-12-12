@@ -7,11 +7,8 @@ import Control.Arrow ((&&&))
 import Control.Monad (filterM, liftM, when)
 import Data.Char (toLower)
 import Data.Function (on)
-import Data.List (partition, sortBy)
 import Data.Map (Map, findWithDefault, fromList, insert, toList, union)
-import Data.Ord (comparing)
 import Data.Time (UTCTime, diffUTCTime)
-import System.Console.GetOpt (ArgDescr (NoArg, ReqArg), ArgOrder (RequireOrder), OptDescr (Option), getOpt, usageInfo)
 import System.Directory (createDirectoryIfMissing, doesFileExist, getDirectoryContents, removeDirectory, removeFile)
 import System.Environment (getEnv)
 import System.Environment.XDG.BaseDir (getAllDataFiles, getUserDataDir, getUserDataFile)
@@ -20,15 +17,8 @@ import System.IO (IOMode (ReadMode, WriteMode), hClose, hPutStr, hSetEncoding, o
 import System.IO.Strict (hGetContents)
 import Version (CurrentFormat, parseCurrentFormat, pprintCurrentFormat)
 import Prelude
-
-options :: [OptDescr Flag]
-options =
-  [ Option "p" ["profile"] (ReqArg Profile "PROFILE") "which popularity profile to use",
-    Option "f" ["filter"] (NoArg Prune) "prune a profile to contain exactly the lines of stdin",
-    Option "x" ["executables"] (NoArg Executables) "search $PATH for executables for the next run",
-    Option "v" ["version"] (NoArg Version) "print the version number",
-    Option "h" ["help"] (NoArg Help) "show usage information"
-  ]
+import Options.Applicative
+import Data.List (sortOn)
 
 data Options = Options
   { dmenuOpts :: [String],
@@ -37,33 +27,14 @@ data Options = Options
     executables :: Bool
   }
 
-data Flag
-  = Profile String
-  | Prune
-  | Executables
-  | Version
-  | Help
-  deriving (Eq, Ord, Show, Read)
+pOptions :: Parser Options 
+pOptions = Options <$> pDmenuOpts  <*> pProfile <*> pPrune <*> pExecutables
+  where 
+    pDmenuOpts = many $ argument str (metavar "DMENU_OPTIONS")
+    pProfile = strOption $ long "profile"  <> short 'p' <> value "default" <> help "which popularity profile to use"
+    pExecutables = switch $ long "executables" <> short 'x' <> help "search $PATH for executables for the next run"
+    pPrune = switch $ long "filter" <> short 'f' <> help "prune a profile to contain exactly the lines of stdin"
 
-compactFlags :: [Flag] -> (Flag, Bool, Bool)
-compactFlags fs = (flag, not $ null prunes, not $ null execs)
-  where
-    (prunes, nonPrunes) = partition (== Prune) fs
-    (execs, nonExecs) = partition (== Executables) nonPrunes
-    flag = foldr1 compactFlags' . (Profile "default" :) $ nonExecs
-    compactFlags' Help _ = Help
-    compactFlags' _ Help = Help
-    compactFlags' Version _ = Version
-    compactFlags' _ Version = Version
-    compactFlags' _ p = p
-
-parseOptions :: String -> String -> [String] -> Either String Options
-parseOptions introText version ss =
-  case onFirst compactFlags $ getOpt RequireOrder options ss of
-    ((Profile s, f, x), dOpts, []) -> Right (Options dOpts s f x)
-    ((Version, _, _), _, []) -> Left (version ++ "\n")
-    ((Help, _, _), _, []) -> Left $ usageInfo introText options
-    (_, _, es) -> Left . concat $ es
 
 type Commands = Map String Double
 
@@ -115,9 +86,6 @@ writeProfile opts cv = do
 -- pure {{{
 onFirst :: (a -> a') -> (a, b, c) -> (a', b, c)
 onFirst f (a, b, c) = (f a, b, c)
-
-sortOn :: Ord b => (a -> b) -> [a] -> [a]
-sortOn f = map snd . sortBy (comparing fst) . map (f &&& id)
 
 descSnd :: Num b => (String, b) -> (b, String)
 descSnd = (negate . snd) &&& (map toLower . fst)

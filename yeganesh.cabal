@@ -27,7 +27,7 @@ flag profiling
 
 Executable yeganesh
     main-is:        main.hs
-    other-modules:  Catch, Lex, Paths_yeganesh, Version, Yeganesh
+    other-modules:  Lex, Paths_yeganesh, Version, Yeganesh
     build-depends:  base >= 3 && < 5,
                     containers >= 0.1,
                     directory >= 1.0,
@@ -42,7 +42,7 @@ Executable yeganesh
 
 Executable yeganesh-strip
     main-is:        strip.hs
-    other-modules:  Catch, Lex, Paths_yeganesh, Version, Yeganesh
+    other-modules:  Lex, Paths_yeganesh, Version, Yeganesh
     build-depends:  base >= 3 && < 5,
                     containers >= 0.1,
                     directory >= 1.0,

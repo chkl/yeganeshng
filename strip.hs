@@ -1,10 +1,10 @@
 module Main where
 
 import Data.Map (mapKeysWith)
-import System.Environment (getArgs)
 import Version (versionStrip)
-import Yeganesh (Options, deprecate, inFileName, merge, profile, parseOptions,
+import Yeganesh (pOptions, Options, deprecate, inFileName, merge, profile,
     readPossiblyNonExistent, stripNewline, writeProfile)
+import Options.Applicative (progDesc, (<**>), helper, info, execParser)
 
 runWithOptions :: Options -> IO ()
 runWithOptions opts = do
@@ -21,4 +21,6 @@ introText = unlines $ [
     "Profiles are stored in the XDG data home for yeganesh."]
 
 main :: IO ()
-main = getArgs >>= either putStr runWithOptions . parseOptions introText versionStrip
+main = execParser opts >>= runWithOptions
+    where
+        opts = info (pOptions <**> helper) (progDesc introText)

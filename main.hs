@@ -7,19 +7,20 @@ import Control.Monad (filterM, forM)
 import Data.Map (empty, intersection, union)
 import Data.Time (getCurrentTime)
 import System.Directory (getDirectoryContents)
-import System.Environment (getArgs, getEnv)
+import System.Environment (getEnv)
 import System.Exit (ExitCode(ExitSuccess, ExitFailure), exitWith)
 import System.FilePath ((</>))
 import System.IO (hClose, hGetContents, hPutStr, stderr, stdout)
 import System.Posix.Files (fileAccess, getFileStatus, isDirectory)
 import System.Process (runInteractiveProcess, waitForProcess)
 import Version (CurrentFormat, versionYeganesh)
-import Yeganesh (Commands, Options, addEntries, deprecate, dmenuOpts,
-    executables, inFileName, parseInput, parseOptions, parsePath, profile,
+import Yeganesh (pOptions, Commands, Options, addEntries, deprecate, dmenuOpts,
+    executables, inFileName, parseInput, parsePath, profile,
     prune, readPossiblyNonExistent, showPriority, stripNewline, updatePriority,
     writeProfile)
 import qualified System.IO.Strict as Strict (getContents)
 import Control.Exception (IOException, catch)
+import Options.Applicative (execParser, progDesc, (<**>), helper, info)
 
 -- IO stuff {{{
 catchList :: IO [a] -> IO [a]
@@ -91,4 +92,9 @@ introText = unlines $ [
     "Profiles are stored in the XDG data home for yeganesh."]
 
 main :: IO ()
-main = getArgs >>= either putStr runWithOptions . parseOptions introText versionYeganesh
+main = execParser opts >>= runWithOptions
+    where
+        opts = info (pOptions <**> helper) (progDesc introText)
+
+    --  getArgs >>= either putStr runWithOptions . parseOptions introText versionYeganesh
+
