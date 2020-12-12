@@ -24,16 +24,18 @@ data Options = Options
   { dmenuOpts :: [String],
     profile :: String,
     prune :: Bool,
-    executables :: Bool
+    executables :: Bool,
+    dmenuProgram :: String
   }
 
 pOptions :: Parser Options 
-pOptions = Options <$> pDmenuOpts  <*> pProfile <*> pPrune <*> pExecutables
+pOptions = Options <$> pDmenuOpts  <*> pProfile <*> pPrune <*> pExecutables <*> pDmenuProgram
   where 
     pDmenuOpts = many $ argument str (metavar "DMENU_OPTIONS")
     pProfile = strOption $ long "profile"  <> short 'p' <> value "default" <> help "which popularity profile to use"
     pExecutables = switch $ long "executables" <> short 'x' <> help "search $PATH for executables for the next run"
     pPrune = switch $ long "filter" <> short 'f' <> help "prune a profile to contain exactly the lines of stdin"
+    pDmenuProgram = strOption $ long "dmenu-program" <> short 'm' <> value "dmenu" <> help "the dmenu-like program to execute, e.g. dmenu, bemenu.."
 
 
 type Commands = Map String Double

@@ -14,7 +14,7 @@ import System.IO (hClose, hGetContents, hPutStr, stderr, stdout)
 import System.Posix.Files (fileAccess, getFileStatus, isDirectory)
 import System.Process (runInteractiveProcess, waitForProcess)
 import Version (CurrentFormat, versionYeganesh)
-import Yeganesh (pOptions, Commands, Options, addEntries, deprecate, dmenuOpts,
+import Yeganesh (dmenuProgram, pOptions, Commands, Options, addEntries, deprecate, dmenuOpts,
     executables, inFileName, parseInput, parsePath, profile,
     prune, readPossiblyNonExistent, showPriority, stripNewline, updatePriority,
     writeProfile)
@@ -27,9 +27,9 @@ catchList :: IO [a] -> IO [a]
 catchList = flip catch (\(_::IOException) -> return $ [])
 -- }}}
 -- shell stuff {{{
-dmenu :: [String] -> CurrentFormat -> IO (ExitCode, CurrentFormat)
-dmenu opts cv@(_, cmds) = do
-    (hIn, hOut, hErr, p) <- runInteractiveProcess "dmenu" opts Nothing Nothing
+dmenu :: String -> [String] -> CurrentFormat -> IO (ExitCode, CurrentFormat)
+dmenu program opts cv@(_, cmds) = do
+    (hIn, hOut, hErr, p) <- runInteractiveProcess program opts Nothing Nothing
     hPutStr hIn (showPriority cmds)
     hClose hIn
     o <- hGetContents hOut
@@ -74,7 +74,7 @@ runWithOptions opts = do
     inFile          <- inFileName (profile opts)
     cached          <- readPossiblyNonExistent inFile
     new             <- parseStdin (executables opts)
-    (code, updated) <- dmenu (dmenuOpts opts) (second (`combine` new) cached)
+    (code, updated) <- dmenu (dmenuProgram opts) (dmenuOpts opts) (second (`combine` new) cached)
     execs           <- future
     writeProfile opts (addEntries execs updated)
     deprecate inFile (profile opts)
