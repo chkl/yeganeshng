@@ -39,10 +39,6 @@ Executable yeganesh
                     xdg-basedir >= 0.2,
                     optparse-applicative
     ghc-options:    -Wall
-    extensions:     CPP
-    if flag(profiling)
-        ghc-options: -auto-all
-        cpp-options: -Dprofiling
 
 Executable yeganesh-strip
     main-is:        strip.hs

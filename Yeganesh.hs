@@ -1,7 +1,8 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- boilerplate {{{
 module Yeganesh where
 
-import Catch (catch)
+import Control.Exception (IOException, catch)
 import Control.Arrow ((&&&))
 import Control.Monad (filterM, liftM, when)
 import Data.Char (toLower)
@@ -95,7 +96,7 @@ deprecate inFile arg = do
       (removeDirectory depDir)
 
 readPossiblyNonExistent :: FilePath -> IO CurrentFormat
-readPossiblyNonExistent file = catch (readUTF8File file) (const . return $ "") >>= parseCurrentFormat
+readPossiblyNonExistent file = catch (readUTF8File file) (\(_:: IOException) -> return $ "") >>= parseCurrentFormat
   where
     readUTF8File name = do
       h <- openFile name ReadMode

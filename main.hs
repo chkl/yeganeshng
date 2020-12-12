@@ -1,8 +1,6 @@
--- boilerplate {{{
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Catch (catch)
 import Control.Arrow (second)
 import Control.Concurrent (newEmptyMVar, takeMVar, putMVar, forkIO)
 import Control.Monad (filterM, forM)
@@ -21,19 +19,14 @@ import Yeganesh (Commands, Options, addEntries, deprecate, dmenuOpts,
     prune, readPossiblyNonExistent, showPriority, stripNewline, updatePriority,
     writeProfile)
 import qualified System.IO.Strict as Strict (getContents)
--- }}}
+import Control.Exception (IOException, catch)
+
 -- IO stuff {{{
 catchList :: IO [a] -> IO [a]
-catchList = flip catch (const . return $ [])
+catchList = flip catch (\(_::IOException) -> return $ [])
 -- }}}
 -- shell stuff {{{
 dmenu :: [String] -> CurrentFormat -> IO (ExitCode, CurrentFormat)
-
-#ifdef profiling
--- when profiling, it's convenient to skip the call out to dmenu
-dmenu opts cv = return (ExitSuccess, cv)
-#endif
-
 dmenu opts cv@(_, cmds) = do
     (hIn, hOut, hErr, p) <- runInteractiveProcess "dmenu" opts Nothing Nothing
     hPutStr hIn (showPriority cmds)
@@ -64,14 +57,11 @@ lsx True  = do
         putMVar mvar (concat execs)
     return (takeMVar mvar)
     where
-    executable file = flip catch (\_ -> return False) $ do
+    executable file = flip catch (\(_::IOException) -> return False) $ do
         status <- getFileStatus file
         case isDirectory status of
             True  -> return False
             False -> fileAccess file True False True
-            -- TODO: do people prefer to see files which are executable by
-            -- *someone*, even if not by the current user? ask brisbin on
-            -- Freenode, who is to date the only person to request this feature
 
 parseStdin :: Bool -> IO Commands
 parseStdin False = fmap parseInput Strict.getContents
