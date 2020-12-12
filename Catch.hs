@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+
 module Catch (catch) where
 
 #if MIN_VERSION_base(4,0,0)
